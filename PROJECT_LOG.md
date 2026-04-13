@@ -10,7 +10,7 @@ El objetivo es **documentar el razonamiento del equipo**, no solo el resultado f
 ## 📅 Entrada #001 – Inicio del proyecto
 
 **Fecha:**  13/04/2026
-**Autores:**  Grupo
+**Autores:**  Grupo 5
 
 ### Contexto
 Ingesta del dataset a S3
@@ -25,6 +25,41 @@ Ingesta del dataset a S3
 ### Resultado
 
 ---
+
+## 📅 Entrada #002 – Creación de la VPC
+
+**Fecha:**  13/04/2026
+**Autores:**  Grupo 5
+
+### Contexto
+Creación de una VPC
+
+### Decisiones tomadas
+- Decisión 1: Definir rango de IP's
+- Decisión 2: Cración de Roles
+
+### Problemas
+
+### Resultado
+
+---
+
+## 📅 Entrada #003 – Creación de la EC2
+
+**Fecha:**  13/04/2026
+**Autores:**  Grupo 5
+
+### Contexto
+Creación de una EC2
+
+### Decisiones tomadas
+- Decisión 1: Definir rango de IP's
+- Decisión 2: Ubutu como SO
+
+### Problemas
+- Problemas con conectar con la máquina
+
+### Resultado
 
 ### Logs relevantes
 ```text
