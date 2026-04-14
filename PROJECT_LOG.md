@@ -334,7 +334,7 @@ MERGE (p1)-[s:SIMILAR_TO]->(p2)
 SET s.weight = common_buyers;
 ```
 
-## 📅 Entrada #006 – Visualización del grafo y justificación de la Query 1
+## 📅 Entrada #005 – Visualización del grafo y justificación de la Query 1
 
 **Fecha:** 14/04/2026  
 **Autores:** Grupo 5
