@@ -350,7 +350,7 @@ de exploración progresiva del grafo.
 
 ### 🔍 Imagen 1 – Co‑compra directa (punto de partida)
 
-./docs/images/graph_01_copurchase.png
+[!Copurchase](./docs/images/graph_01_copurchase.png)
 
 **Query ejecutada:**
 ```cypher
@@ -382,7 +382,7 @@ RETURN path;
 
 ### 🔍 Imagen 2 – Contexto completo (clientes + reviews)
 
-./docs/images/graph\_02\_full\_context.png
+[!Full context](./docs/images/graph_02_full_context.png)
 
 **Query ejecutada:**
 
@@ -424,7 +424,7 @@ LIMIT 30;
 
 ### 🔍 Imagen 3 – Relación SIMILAR\_TO (producto más relacionado)
 
-./docs/images/graph\_03\_similar\_to.png
+[!SIMILAR_TO](./docs/images/graph\_03\_similar\_to.png)
 
 **Query ejecutada:**
 
