@@ -216,7 +216,7 @@ RETURN row
 LIMIT 5;
 ```
 
-**Resultado:** ✅ Sin errores 22NAC ni 22N43.
+**Resultado:** Sin errores 22NAC ni 22N43.
 
 **Justificación técnica**
 
@@ -334,5 +334,123 @@ MERGE (p1)-[s:SIMILAR_TO]->(p2)
 SET s.weight = common_buyers;
 ```
 
+## 📅 Entrada #006 – Visualización del grafo y justificación de la Query 1
+
+**Fecha:** 14/04/2026  
+**Autores:** Grupo 5
+
+### Contexto
+Para justificar la elección del producto de referencia
+(`product_en_0060319 / furniture`) en la pregunta de co‑compra,
+utilizamos Neo4j Browser para visualizar el subgrafo asociado
+a ese producto. Las siguientes imágenes muestran el proceso
+de exploración progresiva del grafo.
+
+---
+
+### 🔍 Imagen 1 – Co‑compra directa (punto de partida)
+
+.docs/images/graph_01_copurchase.png
+
+**Query ejecutada:**
+```cypher
+MATCH path = (p:Product {product_id: "product_en_0060319"})
+             <-[:PURCHASED]-(c:Customer)
+             -[:PURCHASED]->(other:Product)
+RETURN path;
+````
+
+**Qué muestra:**
+
+*   **3 nodos:** 1 Customer + 2 Products
+*   **2 relaciones:** PURCHASED (2)
+*   El cliente `reviewer_en_09...` compró **furniture** y **home**
+
+**Lectura del grafo:**
+
+> Un mismo cliente compró dos productos distintos:
+> `furniture` y `home`. Esto genera la relación de
+> **co‑compra** entre ambos productos.
+
+**Por qué es relevante:**
+
+> Esta imagen demuestra visualmente que `product_en_0060319`
+> tiene co‑compras reales en el dataset, lo que lo convierte
+> en el candidato ideal para la demo de la Query 1.
+
 ***
+
+### 🔍 Imagen 2 – Contexto completo (clientes + reviews)
+
+./images/graph\_02\_full\_context.png
+
+**Query ejecutada:**
+
+```cypher
+MATCH path = (other:Product)
+             <-[:PURCHASED]-(c:Customer)
+             -[:PURCHASED]->(p:Product {product_id: "product_en_0060319"})
+OPTIONAL MATCH (r:Review)-[:ABOUT]->(p)
+OPTIONAL MATCH (c)-[:WROTE]->(r)
+RETURN path, r
+LIMIT 30;
+```
+
+**Qué muestra:**
+
+*   **5 nodos:** 2 Customer + 1 Product + 2 Review
+*   **6 relaciones:** ABOUT (2) + PURCHASED (2) + WROTE (2)
+*   2 clientes compraron `furniture`
+*   Cada cliente escribió una review sobre `furniture`
+
+**Lectura del grafo:**
+
+| Nodo                    | Tipo     | Detalle                 |
+| ----------------------- | -------- | ----------------------- |
+| `reviewer_en_09...`     | Customer | Compró furniture + home |
+| `reviewer_en_00...`     | Customer | Compró furniture        |
+| `furniture`             | Product  | Producto central        |
+| `Came damage...`        | Review   | Review negativa         |
+| `A beauti- ful, dam...` | Review   | Review negativa         |
+
+**Por qué es relevante:**
+
+> Esta imagen confirma que `furniture` es el **único producto
+> del dataset con 2 clientes reales y 2 reviews verificadas**,
+> cumpliendo simultáneamente los dos criterios de selección:
+> máxima co‑compra y máximo volumen de reviews.
+
+***
+
+### 🔍 Imagen 3 – Relación SIMILAR\_TO (producto más relacionado)
+
+./images/graph\_03\_similar\_to.png
+
+**Query ejecutada:**
+
+```cypher
+MATCH path = (p:Product {product_id: "product_en_0060319"})
+             <-[:PURCHASED]-(c:Customer)
+             -[:PURCHASED]->(other:Product)
+OPTIONAL MATCH (p)-[s:SIMILAR_TO]->(sim:Product)
+RETURN path, s, sim
+LIMIT 30;
+```
+
+**Qué muestra:**
+
+*   **5 nodos:** 1 Customer + 2 Product + 2 Review
+*   **3 relaciones:** PURCHASED (2) + SIMILAR\_TO (1)
+*   `furniture` tiene una relación `SIMILAR_TO` con `home`
+*   La review `Came damage...` aparece desconectada
+    (pertenece a otro subgrafo)
+
+**Lectura del grafo:**
+
+> El cliente `reviewer_en_09...` compró **furniture** y **home**.
+> Como resultado, el algoritmo de co‑compra generó la relación
+> `SIMILAR_TO` entre ambos productos, con `weight = 1`
+> (1 cliente en común).
+
+
 
