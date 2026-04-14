@@ -16,11 +16,12 @@ El objetivo es **documentar el razonamiento del equipo**, no solo el resultado f
 Ingesta del dataset a S3
 
 ### Decisiones tomadas
-- Decisión 1: Copiar la ARN del dataset https://registry.opendata.aws/amazon-reviews-ml/ al bucket de S3
-- Decisión 2: Copiar dataset de Kaggle https://www.kaggle.com/datasets/mexwell/amazon-reviews-multi/data al s3
+- Copiar la ARN del dataset https://registry.opendata.aws/amazon-reviews-ml/ al bucket de S3
+- Cambiamos la fuente de ingesta del dataset
+- Copiar dataset de Kaggle https://www.kaggle.com/datasets/mexwell/amazon-reviews-multi/data al s3
 
 ### Problemas
-- Problemas para copiar el dataset original al S3 por falta de permiso.
+- Problemas para copiar el dataset original al S3 por estar deprecado.
 
 ### Resultado
 
@@ -62,4 +63,26 @@ Creación de una EC2
 ### Resultado
 
 ### Logs relevantes
+
+---
+
+## 📅 Entrada #004 – Creación del grafo en Neo4j 
+
+**Fecha:**  14/04/2026
+**Autores:**  Grupo 5
+
+### Contexto
+Creación del grafo en Neo4j
+
+### Decisiones tomadas
+- Decisión 1: Definir rango de IP's
+- Decisión 2: Ubutu como SO
+
+### Problemas
+- Problemas con conectar con la máquina
+
+### Resultado
+
+### Logs relevantes
+
 ```text
