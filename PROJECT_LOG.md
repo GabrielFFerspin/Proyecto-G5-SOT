@@ -452,5 +452,17 @@ LIMIT 30;
 > `SIMILAR_TO` entre ambos productos, con `weight = 1`
 > (1 cliente en común).
 
+## 📅 Entrada #007 – Remediación de vulnerabilidad crítica SSH
+
+**Fecha:** 15/04/2026
+**Autores:** Grupo 5
+
+### Problema
+Alerta de seguridad crítica detectada por la plataforma
+de auditoría sobre el Security Group `sg-04f257b39c7560a9d`:
+
+```text
+sgr-08ec5041c748a12a4 | SSH | TCP | 22 | CRÍTICO
+
 
 
