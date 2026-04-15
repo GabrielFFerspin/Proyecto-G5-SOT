@@ -452,11 +452,7 @@ LIMIT 30;
 > `SIMILAR_TO` entre ambos productos, con `weight = 1`
 > (1 cliente en común).
 
-Aquí tienes la **Entrada #007 completa y actualizada** con toda la información:
 
-***
-
-````markdown
 ## 📅 Entrada #007 – Remediación de vulnerabilidades de seguridad
 y decisión de arquitectura Neo4j
 
