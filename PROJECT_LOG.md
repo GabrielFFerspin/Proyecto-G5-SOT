@@ -452,17 +452,173 @@ LIMIT 30;
 > `SIMILAR_TO` entre ambos productos, con `weight = 1`
 > (1 cliente en común).
 
-## 📅 Entrada #007 – Remediación de vulnerabilidad crítica SSH
+Aquí tienes la **Entrada #007 completa y actualizada** con toda la información:
+
+***
+
+````markdown
+## 📅 Entrada #007 – Remediación de vulnerabilidades de seguridad
+y decisión de arquitectura Neo4j
 
 **Fecha:** 15/04/2026
 **Autores:** Grupo 5
 
-### Problema
-Alerta de seguridad crítica detectada por la plataforma
-de auditoría sobre el Security Group `sg-04f257b39c7560a9d`:
+---
+
+### Contexto
+Durante el desarrollo se recibieron alertas de seguridad
+críticas sobre los Security Groups del proyecto por parte
+de la plataforma de auditoría corporativa (ISD).
+
+---
+
+### Problema 1 — Vulnerabilidad CRÍTICA (semana 1)
+
+**Security Group afectado:**
+`sg-04f257b39c7560a9d` | `neo4j-g5-security`
+
+**Alerta:**
+```text
+AWS SG insecure critical inbound access rules
+Categoría: Native Cloud | Severidad: CRÍTICA
+````
+
+**Causa raíz:**
+
+*   Puerto SSH (22) abierto sin restricción de IP.
+*   Regla: `sgr-08ec5041c748a12a4 | SSH | TCP | 22 | 0.0.0.0/0`
+
+**Solución aplicada:**
+
+*   ✅ Eliminada regla SSH del Security Group.
+*   ✅ Corregido en CloudFormation (IaC).
+*   ✅ Sin cambios manuales adicionales.
+
+***
+
+### Problema 2 — Vulnerabilidad MEDIA (2 semanas)
+
+**Security Group afectado:**
+`sg-0546e20a03f66e817` | `g5-neo4j-security`
+
+**Alerta:**
 
 ```text
-sgr-08ec5041c748a12a4 | SSH | TCP | 22 | CRÍTICO
+AWS NSG insecure outbound access rules
+Categoría: Native Cloud | Severidad: MEDIA
+```
+
+**Causa raíz:**
+
+*   Regla `All traffic → 0.0.0.0/0` en Outbound rules.
+*   Permite enviar tráfico a cualquier destino.
+
+**Solución aplicada:**
+
+*   ✅ Eliminada regla `All traffic`.
+*   ✅ Permitido solo tráfico necesario:
+    *   HTTPS (443) → hacia AWS
+    *   Bolt (7687) → interno VPC
+
+**Configuración final en CloudFormation:**
+
+```yaml
+SecurityGroupIngress:
+  - IpProtocol: tcp
+    FromPort: 7687
+    ToPort: 7687
+    CidrIp: 10.0.0.0/16
+  - IpProtocol: tcp
+    FromPort: 7474
+    ToPort: 7474
+    CidrIp: 10.0.0.0/16
+
+SecurityGroupEgress:
+  - IpProtocol: tcp
+    FromPort: 443
+    ToPort: 443
+    CidrIp: 0.0.0.0/0
+  - IpProtocol: tcp
+    FromPort: 7687
+    ToPort: 7687
+    CidrIp: 10.0.0.0/16
+```
+
+***
+
+### Problema 3 — Puertos autorizados por política ISD
+
+**Situación:**
+La política de seguridad corporativa (ISD) publicó
+la lista de puertos autorizados. El puerto 22 (SSH)
+está **explícitamente prohibido** como puerto crítico
+no conforme.
+
+**Puertos TCP autorizados:**
+
+    9000, 53, 80, 8080, 8081, 443, 8443,
+    5061, 5269, 1720, 5060, 5062,
+    15000-20999, 10100, 10101, 31274
+
+**Impacto:**
+
+*   ❌ SSH (puerto 22) → prohibido definitivamente
+*   ❌ SSH en otro puerto → viola política igualmente
+
+***
+
+### Problema 4 — Alternativas evaluadas para acceso a EC2
+
+Una vez descartado SSH, se evaluaron las siguientes
+alternativas para acceder a la EC2 con Neo4j:
+
+| Alternativa               | Resultado | Motivo                    |
+| ------------------------- | --------- | ------------------------- |
+| SSH (puerto 22)           | ❌         | Prohibido por ISD         |
+| SSH (otro puerto)         | ❌         | Viola política igualmente |
+| Internet Gateway          | ❌         | Sin permisos de red       |
+| AWS Session Manager (SSM) | ❌         | Sin permisos en la cuenta |
+| Neo4j local (Desktop)     | ✅         | Viable para desarrollo    |
+| **Neo4j AuraDB**          | ✅✅        | **Solución definitiva**   |
+
+***
+
+### Decisión final — Conectar con Neo4j AuraDB via API Python
+
+**Motivo:**
+El equipo no dispone de permisos para:
+
+*   Crear Internet Gateways
+*   Usar AWS Systems Manager (SSM)
+*   Abrir puertos de acceso directo a EC2
+
+**Solución adoptada:**
+Conectar el pipeline RAG directamente a
+**Neo4j AuraDB** (servicio gestionado) mediante
+la API Python oficial de Neo4j.
+
+
+## 📅 Entrada #012 – RAG funcionando end-to-end
+
+**Fecha:** 15/04/2026
+**Autores:** Grupo 5
+
+### Hito alcanzado
+Pipeline RAG completamente funcional:
+- Neo4j local → queries ejecutadas
+- Amazon Nova Micro → respuestas generadas
+- 5 preguntas de negocio respondidas
+
+### Stack tecnológico final
+- Grafo: Neo4j Desktop local
+- Modelo: eu.amazon.nova-micro-v1:0
+- Región: eu-west-3
+- Autenticación: Bedrock API Key
+
+### Observaciones
+El LLM responde de forma honesta cuando
+el contexto es limitado, lo cual es el
+comportamiento correcto en un sistema RAG.
 
 
 
