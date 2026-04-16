@@ -285,6 +285,8 @@ MERGE (p1)-[s:SIMILAR_TO]->(p2)
 SET s.weight = common_buyers;
 ```
 
+***
+
 ## 📅 Entrada #005 – Visualización del grafo y justificación de la Query 1
 
 **Fecha:** 14/04/2026  
@@ -403,6 +405,7 @@ LIMIT 30;
 > `SIMILAR_TO` entre ambos productos, con `weight = 1`
 > (1 cliente en común).
 
+***
 
 ## 📅 Entrada #006 – Remediación de vulnerabilidades de seguridad
 y decisión de arquitectura Neo4j
@@ -549,6 +552,20 @@ Se ha integrado un job de AWS Glue que carga y transforma el dataset procesado d
 
 ### Estado
 El grafo queda completamente poblado y preparado para consultas avanzadas del sistema RAG desplegado en AWS Lambda.
+
+***
+
+📅 Entrada #010 – Evaluación del esquema del grafo y ajuste de queries
+
+Fecha: 16/04/2026
+Autores: Grupo 5
+
+Contexto
+Tras validar el funcionamiento del motor RAG sobre AWS Lambda y Neo4j AuraDB, se ha evaluado el comportamiento del sistema ante preguntas que requieren un análisis semántico más profundo del grafo, como la afinidad de co‑compra entre categorías.
+
+Observaciones técnicas
+Las consultas Cypher asociadas a esta intención se ejecutan sin errores de sintaxis ni de ejecución.
+
 
 
 
