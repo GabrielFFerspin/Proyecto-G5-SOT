@@ -221,55 +221,6 @@ LIMIT 5;
 **Justificación técnica**
 
 > TSV elimina ambigüedades con comillas en texto libre.
-> Es una práctica habitual en pipelines de datos reales.
-
-***
-
-### Problema C – Advertencias 01N51 / 01N52
-
-**Síntoma**
-
-```text
-01N51: Relationship type `SIMILAR_TO` does not exist
-01N52: Property key `weight` does not exist
-```
-
-**Causa raíz**
-
-*   Neo4j es schema-less: tipos de relación y propiedades
-    se crean dinámicamente.
-*   Las advertencias aparecen al hacer `MATCH` sobre algo
-    que aún no existe.
-
-**Solución**
-
-*   No se realizó ninguna acción.
-*   Tras crear `SIMILAR_TO`, las advertencias desaparecieron.
-
-**Conclusión**
-
-> Son **warnings informativos**, no errores.
-
-***
-
-### Problema D – `REMOVE` sin cambios
-
-**Síntoma**
-
-```text
-No changes, no records
-```
-
-**Causa raíz**
-
-*   Las propiedades a eliminar nunca existieron en los nodos.
-*   Neo4j no almacena propiedades nulas.
-*   `Database Information` muestra historial de esquema,
-    no el estado real de cada nodo.
-
-**Conclusión**
-
-> El grafo estaba ya limpio y consistente. `REMOVE` es idempotente.
 
 ***
 
@@ -453,7 +404,7 @@ LIMIT 30;
 > (1 cliente en común).
 
 
-## 📅 Entrada #007 – Remediación de vulnerabilidades de seguridad
+## 📅 Entrada #006 – Remediación de vulnerabilidades de seguridad
 y decisión de arquitectura Neo4j
 
 **Fecha:** 15/04/2026
@@ -486,61 +437,11 @@ Categoría: Native Cloud | Severidad: CRÍTICA
 
 **Solución aplicada:**
 
-*   ✅ Eliminada regla SSH del Security Group.
-*   ✅ Corregido en CloudFormation (IaC).
-*   ✅ Sin cambios manuales adicionales.
+*   Eliminada regla SSH del Security Group.
+*   Sin cambios manuales adicionales.
 
 ***
 
-### Problema 2 — Vulnerabilidad MEDIA (2 semanas)
-
-**Security Group afectado:**
-`sg-0546e20a03f66e817` | `g5-neo4j-security`
-
-**Alerta:**
-
-```text
-AWS NSG insecure outbound access rules
-Categoría: Native Cloud | Severidad: MEDIA
-```
-
-**Causa raíz:**
-
-*   Regla `All traffic → 0.0.0.0/0` en Outbound rules.
-*   Permite enviar tráfico a cualquier destino.
-
-**Solución aplicada:**
-
-*   ✅ Eliminada regla `All traffic`.
-*   ✅ Permitido solo tráfico necesario:
-    *   HTTPS (443) → hacia AWS
-    *   Bolt (7687) → interno VPC
-
-**Configuración final en CloudFormation:**
-
-```yaml
-SecurityGroupIngress:
-  - IpProtocol: tcp
-    FromPort: 7687
-    ToPort: 7687
-    CidrIp: 10.0.0.0/16
-  - IpProtocol: tcp
-    FromPort: 7474
-    ToPort: 7474
-    CidrIp: 10.0.0.0/16
-
-SecurityGroupEgress:
-  - IpProtocol: tcp
-    FromPort: 443
-    ToPort: 443
-    CidrIp: 0.0.0.0/0
-  - IpProtocol: tcp
-    FromPort: 7687
-    ToPort: 7687
-    CidrIp: 10.0.0.0/16
-```
-
-***
 
 ### Problema 3 — Puertos autorizados por política ISD
 
@@ -575,7 +476,7 @@ alternativas para acceder a la EC2 con Neo4j:
 | Internet Gateway          | ❌         | Sin permisos de red       |
 | AWS Session Manager (SSM) | ❌         | Sin permisos en la cuenta |
 | Neo4j local (Desktop)     | ✅         | Viable para desarrollo    |
-| **Neo4j AuraDB**          | ✅✅        | **Solución definitiva**   |
+| **Neo4j AuraDB**          | ✅✅       | **Solución definitiva**   |
 
 ***
 
@@ -594,7 +495,7 @@ Conectar el pipeline RAG directamente a
 la API Python oficial de Neo4j.
 
 
-## 📅 Entrada #012 – RAG funcionando end-to-end
+## 📅 Entrada #007 – RAG funcionando end-to-end en local
 
 **Fecha:** 15/04/2026
 **Autores:** Grupo 5
@@ -611,10 +512,44 @@ Pipeline RAG completamente funcional:
 - Región: eu-west-3
 - Autenticación: Bedrock API Key
 
-### Observaciones
-El LLM responde de forma honesta cuando
-el contexto es limitado, lo cual es el
-comportamiento correcto en un sistema RAG.
+
+# 📅 Entrada #008 – Integración del motor RAG con Neo4j AuraDB
+
+**Fecha:** 16/04/2026  
+**Autores:** Grupo 5
+
+### Descripción
+Se ha completado con éxito la integración del motor RAG desplegado en AWS Lambda con la base de datos Neo4j AuraDB. La función Lambda se conecta a AuraDB mediante el protocolo `neo4j+s` (SSL), utilizando credenciales configuradas como variables de entorno y autenticación segura gestionada por el servicio.
+
+### Avances clave
+- ✅ Conexión establecida entre AWS Lambda y Neo4j AuraDB.
+- ✅ Ejecución correcta de consultas Cypher desde Lambda.
+- ✅ Integración del flujo completo RAG: detección de intención → consulta al grafo → generación de contexto → llamada a Amazon Bedrock.
+- ✅ Autenticación correcta de Amazon Bedrock mediante IAM (`boto3`), descartando el uso de API keys.
+- ✅ Respuestas del sistema coherentes con el estado real de los datos del grafo (sin alucinaciones cuando no hay resultados).
+
+### Estado
+**Integración RAG–AuraDB completada y funcional.**
+
+## 📅 Entrada #009 – Carga del grafo en Neo4j AuraDB mediante AWS Glue
+
+**Fecha:** 16/04/2026  
+**Autores:** Grupo 5
+
+### Descripción
+Se ha integrado un job de AWS Glue que carga y transforma el dataset procesado desde S3 hacia Neo4j AuraDB, construyendo el grafo de conocimiento utilizado por el motor RAG.
+
+### Avances clave
+- ✅ Ingesta distribuida desde S3 utilizando Spark en AWS Glue.
+- ✅ Creación de nodos `Customer`, `Product` y `Review` con constraints de unicidad.
+- ✅ Creación de relaciones semánticas (`WROTE`, `PURCHASED`, `ABOUT`) entre entidades.
+- ✅ Cálculo y persistencia de relaciones `SIMILAR_TO` entre productos basadas en co‑compra, con propiedad `weight`.
+- ✅ Inserción optimizada en AuraDB mediante escrituras batch.
+- ✅ Conectividad y ejecución correcta del job contra Neo4j AuraDB.
+
+### Estado
+El grafo queda completamente poblado y preparado para consultas avanzadas del sistema RAG desplegado en AWS Lambda.
+
 
 
 
