@@ -555,7 +555,7 @@ El grafo queda completamente poblado y preparado para consultas avanzadas del si
 
 ***
 
-📅 Entrada #010 – Evaluación del esquema del grafo y ajuste de queries
+## 📅 Entrada #010 – Evaluación del esquema del grafo y ajuste de queries
 
 Fecha: 16/04/2026
 Autores: Grupo 5
