@@ -566,7 +566,73 @@ Tras validar el funcionamiento del motor RAG sobre AWS Lambda y Neo4j AuraDB, se
 Observaciones técnicas
 Las consultas Cypher asociadas a esta intención se ejecutan sin errores de sintaxis ni de ejecución.
 
+***
 
+## 📅 Entrada #011 – Validación final del RAG en AWS
+
+**Fecha:** 17/04/2026
+**Autores:** Grupo 5
+
+### Hito alcanzado
+Pipeline RAG completamente funcional en AWS, respondiendo
+preguntas de negocio reales con datos del grafo de Neo4j AuraDB.
+
+### Preguntas validadas
+
+**Pregunta 1:** ¿Qué productos se compran juntos habitualmente?
+- Intent detectado: `category_affinity`
+- Resultados: 10 pares de co-compra reales
+- Respuesta: Coherente y estructurada ✅
+
+**Pregunta 2:** ¿Cuáles son los productos más populares y mejor valorados?
+- Intent detectado: `top_rated`
+- Resultados: 10 productos con rating 5.0
+- Respuesta: Análisis correcto con criterio propio ✅
+
+### Stack tecnológico validado
+- Dataset: Amazon Reviews 2023 – Toys and Games (92.120 reviews)
+- Grafo: Neo4j AuraDB (92.120 nodos, 126.049 relaciones SIMILAR_TO)
+- Orquestación: AWS Lambda (Python 3.11)
+- LLM: Amazon Nova Micro (eu-west-3)
+- Autenticación: IAM + Secrets Manager
+- Ingesta: AWS Glue + S3
+
+### Estado final
+- Pipeline RAG end-to-end: ✅ funcional
+- Infraestructura cloud: ✅ cerrada
+- Preguntas de negocio validadas: ✅## 📅 Entrada #015 – Validación final del RAG en AWS
+
+**Fecha:** 17/04/2026
+**Autores:** Grupo 5
+
+### Hito alcanzado
+Pipeline RAG completamente funcional en AWS, respondiendo
+preguntas de negocio reales con datos del grafo de Neo4j AuraDB.
+
+### Preguntas validadas
+
+**Pregunta 1:** ¿Qué productos se compran juntos habitualmente?
+- Intent detectado: `category_affinity`
+- Resultados: 10 pares de co-compra reales
+- Respuesta: Coherente y estructurada ✅
+
+**Pregunta 2:** ¿Cuáles son los productos más populares y mejor valorados?
+- Intent detectado: `top_rated`
+- Resultados: 10 productos con rating 5.0
+- Respuesta: Análisis correcto con criterio propio ✅
+
+### Stack tecnológico validado
+- Dataset: Amazon Reviews 2023 – Toys and Games (92.120 reviews)
+- Grafo: Neo4j AuraDB (92.120 nodos, 126.049 relaciones SIMILAR_TO)
+- Orquestación: AWS Lambda (Python 3.11)
+- LLM: Amazon Nova Micro (eu-west-3)
+- Autenticación: IAM + Secrets Manager
+- Ingesta: AWS Glue + S3
+
+### Estado final
+- Pipeline RAG end-to-end: ✅ funcional
+- Infraestructura cloud: ✅ cerrada
+- Preguntas de negocio validadas: ✅
 
 
 
