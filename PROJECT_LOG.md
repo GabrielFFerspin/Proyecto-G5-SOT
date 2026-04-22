@@ -221,55 +221,6 @@ LIMIT 5;
 **Justificación técnica**
 
 > TSV elimina ambigüedades con comillas en texto libre.
-> Es una práctica habitual en pipelines de datos reales.
-
-***
-
-### Problema C – Advertencias 01N51 / 01N52
-
-**Síntoma**
-
-```text
-01N51: Relationship type `SIMILAR_TO` does not exist
-01N52: Property key `weight` does not exist
-```
-
-**Causa raíz**
-
-*   Neo4j es schema-less: tipos de relación y propiedades
-    se crean dinámicamente.
-*   Las advertencias aparecen al hacer `MATCH` sobre algo
-    que aún no existe.
-
-**Solución**
-
-*   No se realizó ninguna acción.
-*   Tras crear `SIMILAR_TO`, las advertencias desaparecieron.
-
-**Conclusión**
-
-> Son **warnings informativos**, no errores.
-
-***
-
-### Problema D – `REMOVE` sin cambios
-
-**Síntoma**
-
-```text
-No changes, no records
-```
-
-**Causa raíz**
-
-*   Las propiedades a eliminar nunca existieron en los nodos.
-*   Neo4j no almacena propiedades nulas.
-*   `Database Information` muestra historial de esquema,
-    no el estado real de cada nodo.
-
-**Conclusión**
-
-> El grafo estaba ya limpio y consistente. `REMOVE` es idempotente.
 
 ***
 
@@ -333,6 +284,8 @@ WITH p1, p2, COUNT(DISTINCT c) AS common_buyers
 MERGE (p1)-[s:SIMILAR_TO]->(p2)
 SET s.weight = common_buyers;
 ```
+
+***
 
 ## 📅 Entrada #005 – Visualización del grafo y justificación de la Query 1
 
@@ -452,17 +405,375 @@ LIMIT 30;
 > `SIMILAR_TO` entre ambos productos, con `weight = 1`
 > (1 cliente en común).
 
-## 📅 Entrada #007 – Remediación de vulnerabilidad crítica SSH
+***
+
+## 📅 Entrada #006 – Remediación de vulnerabilidades de seguridad
+y decisión de arquitectura Neo4j
 
 **Fecha:** 15/04/2026
 **Autores:** Grupo 5
 
-### Problema
-Alerta de seguridad crítica detectada por la plataforma
-de auditoría sobre el Security Group `sg-04f257b39c7560a9d`:
+---
 
+### Contexto
+Durante el desarrollo se recibieron alertas de seguridad
+críticas sobre los Security Groups del proyecto por parte
+de la plataforma de auditoría corporativa (ISD).
+
+---
+
+### Problema 1 — Vulnerabilidad CRÍTICA (semana 1)
+
+**Security Group afectado:**
+`sg-04f257b39c7560a9d` | `neo4j-g5-security`
+
+**Alerta:**
 ```text
-sgr-08ec5041c748a12a4 | SSH | TCP | 22 | CRÍTICO
+AWS SG insecure critical inbound access rules
+Categoría: Native Cloud | Severidad: CRÍTICA
+````
+
+**Causa raíz:**
+
+*   Puerto SSH (22) abierto sin restricción de IP.
+*   Regla: `sgr-08ec5041c748a12a4 | SSH | TCP | 22 | 0.0.0.0/0`
+
+**Solución aplicada:**
+
+*   Eliminada regla SSH del Security Group.
+*   Sin cambios manuales adicionales.
+
+***
+
+
+### Problema 3 — Puertos autorizados por política ISD
+
+**Situación:**
+La política de seguridad corporativa (ISD) publicó
+la lista de puertos autorizados. El puerto 22 (SSH)
+está **explícitamente prohibido** como puerto crítico
+no conforme.
+
+**Puertos TCP autorizados:**
+
+    9000, 53, 80, 8080, 8081, 443, 8443,
+    5061, 5269, 1720, 5060, 5062,
+    15000-20999, 10100, 10101, 31274
+
+**Impacto:**
+
+*   ❌ SSH (puerto 22) → prohibido definitivamente
+*   ❌ SSH en otro puerto → viola política igualmente
+
+***
+
+### Problema 4 — Alternativas evaluadas para acceso a EC2
+
+Una vez descartado SSH, se evaluaron las siguientes
+alternativas para acceder a la EC2 con Neo4j:
+
+| Alternativa               | Resultado | Motivo                    |
+| ------------------------- | --------- | ------------------------- |
+| SSH (puerto 22)           | ❌         | Prohibido por ISD         |
+| SSH (otro puerto)         | ❌         | Viola política igualmente |
+| Internet Gateway          | ❌         | Sin permisos de red       |
+| AWS Session Manager (SSM) | ❌         | Sin permisos en la cuenta |
+| Neo4j local (Desktop)     | ✅         | Viable para desarrollo    |
+| **Neo4j AuraDB**          | ✅✅       | **Solución definitiva**   |
+
+***
+
+### Decisión final — Conectar con Neo4j AuraDB via API Python
+
+**Motivo:**
+El equipo no dispone de permisos para:
+
+*   Crear Internet Gateways
+*   Usar AWS Systems Manager (SSM)
+*   Abrir puertos de acceso directo a EC2
+
+**Solución adoptada:**
+Conectar el pipeline RAG directamente a
+**Neo4j AuraDB** (servicio gestionado) mediante
+la API Python oficial de Neo4j.
+
+
+## 📅 Entrada #007 – RAG funcionando end-to-end en local
+
+**Fecha:** 15/04/2026
+**Autores:** Grupo 5
+
+### Hito alcanzado
+Pipeline RAG completamente funcional:
+- Neo4j local → queries ejecutadas
+- Amazon Nova Micro → respuestas generadas
+- 5 preguntas de negocio respondidas
+
+### Stack tecnológico final
+- Grafo: Neo4j Desktop local
+- Modelo: eu.amazon.nova-micro-v1:0
+- Región: eu-west-3
+- Autenticación: Bedrock API Key
+
+
+# 📅 Entrada #008 – Integración del motor RAG con Neo4j AuraDB
+
+**Fecha:** 16/04/2026  
+**Autores:** Grupo 5
+
+### Descripción
+Se ha completado con éxito la integración del motor RAG desplegado en AWS Lambda con la base de datos Neo4j AuraDB. La función Lambda se conecta a AuraDB mediante el protocolo `neo4j+s` (SSL), utilizando credenciales configuradas como variables de entorno y autenticación segura gestionada por el servicio.
+
+### Avances clave
+- ✅ Conexión establecida entre AWS Lambda y Neo4j AuraDB.
+- ✅ Ejecución correcta de consultas Cypher desde Lambda.
+- ✅ Integración del flujo completo RAG: detección de intención → consulta al grafo → generación de contexto → llamada a Amazon Bedrock.
+- ✅ Autenticación correcta de Amazon Bedrock mediante IAM (`boto3`), descartando el uso de API keys.
+- ✅ Respuestas del sistema coherentes con el estado real de los datos del grafo (sin alucinaciones cuando no hay resultados).
+
+### Estado
+**Integración RAG–AuraDB completada y funcional.**
+
+## 📅 Entrada #009 – Carga del grafo en Neo4j AuraDB mediante AWS Glue
+
+**Fecha:** 16/04/2026  
+**Autores:** Grupo 5
+
+### Descripción
+Se ha integrado un job de AWS Glue que carga y transforma el dataset procesado desde S3 hacia Neo4j AuraDB, construyendo el grafo de conocimiento utilizado por el motor RAG.
+
+### Avances clave
+- ✅ Ingesta distribuida desde S3 utilizando Spark en AWS Glue.
+- ✅ Creación de nodos `Customer`, `Product` y `Review` con constraints de unicidad.
+- ✅ Creación de relaciones semánticas (`WROTE`, `PURCHASED`, `ABOUT`) entre entidades.
+- ✅ Cálculo y persistencia de relaciones `SIMILAR_TO` entre productos basadas en co‑compra, con propiedad `weight`.
+- ✅ Inserción optimizada en AuraDB mediante escrituras batch.
+- ✅ Conectividad y ejecución correcta del job contra Neo4j AuraDB.
+
+### Estado
+El grafo queda completamente poblado y preparado para consultas avanzadas del sistema RAG desplegado en AWS Lambda.
+
+***
+
+## 📅 Entrada #010 – Evaluación del esquema del grafo y ajuste de queries
+
+Fecha: 16/04/2026
+Autores: Grupo 5
+
+Contexto
+Tras validar el funcionamiento del motor RAG sobre AWS Lambda y Neo4j AuraDB, se ha evaluado el comportamiento del sistema ante preguntas que requieren un análisis semántico más profundo del grafo, como la afinidad de co‑compra entre categorías.
+
+Observaciones técnicas
+Las consultas Cypher asociadas a esta intención se ejecutan sin errores de sintaxis ni de ejecución.
+
+***
+Perfecto 👌 Tengo todo lo que necesito. Primero redacto las entradas que faltan y luego el slide.
+
+***
+
+## 📅 Entrada #012 – Análisis de calidad del dataset original y decisión de cambio
+
+**Fecha:** 17/04/2026
+**Autores:** Grupo 5
+
+### Contexto
+
+Tras validar el funcionamiento del sistema RAG en AWS (Entrada #011), se realizó un análisis de calidad del dataset actual para evaluar la viabilidad del análisis de co-compra y afinidad entre categorías.
+
+### Análisis en Neo4j local
+
+```cypher
+MATCH (c:Customer)-[:PURCHASED]->(p:Product)
+WITH c, COUNT(DISTINCT p) AS num_productos
+WHERE num_productos > 1
+RETURN COUNT(c) AS multi_buyers,
+       AVG(num_productos) AS media,
+       MAX(num_productos) AS maximo
+```
+
+### Resultados
+
+| Métrica                  | Valor      |
+| ------------------------ | ---------- |
+| Total clientes           | 49.865     |
+| Multi-product buyers     | 132        |
+| Porcentaje               | **0,26 %** |
+| Máximo productos/cliente | 3          |
+
+### Conclusión
+
+El dataset Kaggle multilingüe no dispone de suficiente señal de co-compra para soportar un análisis de afinidad entre categorías o entre productos. El 99,74 % de los clientes compraron un único producto, lo que invalida cualquier análisis relacional basado en comportamiento de compra.
+
+### Decisión tomada
+
+Se inicia la búsqueda de un dataset alternativo con mayor densidad de co-compras.
+
+***
+
+## 📅 Entrada #013 – Evaluación de datasets alternativos y selección
+
+**Fecha:** 17/04/2026
+**Autores:** Grupo 5
+
+### Contexto
+
+Se evaluaron múltiples datasets y fuentes para encontrar uno con suficiente señal de co-compra.
+
+### Datasets evaluados
+
+| Dataset                           | Fuente          | Multi-buyers  | %           | Decisión             |
+| --------------------------------- | --------------- | ------------- | ----------- | -------------------- |
+| Kaggle ML (original)              | Kaggle          | 132           | 0,26 %      | ❌ Descartado         |
+| Amazon Reviews ML (multilingüe)   | Kaggle          | 80.269        | 7,31 %      | ⚠️ Válido pero pobre |
+| All\_Beauty McAuley 2023          | HuggingFace     | 43.044        | 6,81 %      | ❌ Peor que actual    |
+| Electronics McAuley 2023          | HuggingFace     | N/A           | \~15 %      | ❌ 20 GB inviable     |
+| **Toys\_and\_Games McAuley 2023** | **HuggingFace** | **2.834.076** | **34,92 %** | ✅ **Seleccionado**   |
+
+### Problemas encontrados durante la búsqueda
+
+*   **Dataset original UCSD deprecado**: Las URLs `datarepo.eng.ucsd.edu` devuelven 404.
+*   **HuggingFace load\_dataset no funciona**: El script de carga fue deprecado (`trust_remote_code` eliminado).
+*   **URLs de reviews inexistentes**: La ruta `raw_review_Electronics` no existe en HuggingFace.
+*   **Solución**: Se localizaron los ficheros mediante la API de HuggingFace (`/api/datasets/McAuley-Lab/Amazon-Reviews-2023`) y se descargaron desde:
+
+<!---->
+
+    https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/review_categories/Toys_and_Games.jsonl
+
+### Justificación de Toys\_and\_Games
+
+*   ✅ **34,92 %** de multi-buyers → 5x mejor que el dataset anterior
+*   ✅ Media de **9,93 productos por cliente**
+*   ✅ Máximo **2.891 productos por cliente**
+*   ✅ Tamaño manejable (\~1-2 GB)
+*   ✅ Compatible con el ETL existente
+
+### Limitación AuraDB Free
+
+El plan gratuito de Neo4j AuraDB tiene un límite de **200.000 nodos**.
+Se ajustó el dataset a **92.120 reviews** para no superar el límite:
+
+| Nodo      | Total      |
+| --------- | ---------- |
+| Review    | 49.993     |
+| Product   | 34.507     |
+| Customer  | 7.620      |
+| **Total** | **92.120** |
+
+***
+
+## 📅 Entrada #014 – Ingesta del nuevo dataset y ajuste del pipeline
+
+**Fecha:** 17/04/2026
+**Autores:** Grupo 5
+
+### Contexto
+
+Una vez seleccionado el dataset de Toys\_and\_Games, se realizó la ingesta completa en AWS y se ajustó el pipeline RAG para adaptarse al nuevo esquema.
+https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/tree/main
+
+### A — Descarga y conversión del dataset
+
+*   Descarga del JSONL desde HuggingFace al vuelo (sin guardar en disco):
+
+```python
+MAX_ROWS = 450_000  # ajustado al límite de AuraDB
+URL = "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023
+       /resolve/main/raw/review_categories/Toys_and_Games.jsonl"
+```
+
+*   Conversión a TSV durante la descarga, eliminando columnas innecesarias (`images`, `helpful_vote`, `verified_purchase`).
+*   Fichero generado: `reviews_toys_games.tsv`
+
+### B — Subida a S3
+
+```bash
+aws s3 cp reviews_toys_games.tsv s3://g5-proyecto-sot/raw/reviews_toys_games.tsv
+```
+
+### C — Nuevo Glue Job
+
+Se adaptó el Glue Job existente al nuevo esquema:
+
+| Campo antiguo         | Campo nuevo                  |
+| --------------------- | ---------------------------- |
+| `product_category`    | ❌ Eliminado (no existe)      |
+| `language`            | ❌ Eliminado (no existe)      |
+| `stars` (IntegerType) | `stars` (FloatType)          |
+| `session()`           | `session(database=NEO4J_DB)` |
+
+**Problemas encontrados y resueltos:**
+
+| Error                             | Causa                                | Solución                                                    |
+| --------------------------------- | ------------------------------------ | ----------------------------------------------------------- |
+| `No module named 'neo4j'`         | Driver no incluido en Glue           | Subir `.whl` a S3 y referenciar en `--extra-py-files`       |
+| `ConcurrentRunsExceededException` | Job anterior activo                  | Esperar a que termine antes de relanzar                     |
+| `Connection refused` (executor)   | `--JOB_NAME` duplicado en parámetros | Eliminar parámetro manual (Glue lo inyecta automáticamente) |
+| `S3_INPUT_PATH` con URL HTTP      | Parámetro con URL incorrecta         | Usar formato `s3://bucket/key`                              |
+| Límite 200K nodos AuraDB          | Dataset demasiado grande             | Reducir a 92.120 reviews                                    |
+
+### D — Ajuste del pipeline RAG (Lambda)
+
+**`neo4j_client.py`**: Adaptación de queries al nuevo esquema sin `category`:
+
+*   `get_category_affinity` → usa `SIMILAR_TO` en lugar de `p.category`
+*   `get_top_rated` → eliminado filtro por categoría
+*   `get_copurchase` → eliminado campo `category`
+
+**`rag_pipeline.py`**: Mejoras en la detección de intención:
+
+*   `category_affinity` tiene prioridad sobre `copurchase` en keywords
+*   Fallback a `category_affinity` cuando `copurchase` no tiene `product_id`
+
+### E — Verificación final del grafo
+
+    SIMILAR_TO: 126.049 relaciones
+    Peso máximo: 6
+    Multi-buyers: 4.698 (61,6 %)
+    Media productos/cliente: 9,93
+
+### Estado
+
+*   Dataset nuevo cargado en AuraDB ✅
+*   Glue Job adaptado y funcional ✅
+*   Lambda ajustada al nuevo esquema ✅
+*   RAG respondiendo preguntas reales ✅
+
+***
+
+## 📅 Entrada #011 – Validación final del RAG en AWS
+
+**Fecha:** 17/04/2026
+**Autores:** Grupo 5
+
+### Hito alcanzado
+Pipeline RAG completamente funcional en AWS, respondiendo
+preguntas de negocio reales con datos del grafo de Neo4j AuraDB.
+
+### Preguntas validadas
+
+**Pregunta 1:** ¿Qué productos se compran juntos habitualmente?
+- Intent detectado: `category_affinity`
+- Resultados: 10 pares de co-compra reales
+- Respuesta: Coherente y estructurada ✅
+
+**Pregunta 2:** ¿Cuáles son los productos más populares y mejor valorados?
+- Intent detectado: `top_rated`
+- Resultados: 10 productos con rating 5.0
+- Respuesta: Análisis correcto con criterio propio ✅
+
+### Stack tecnológico validado
+- Dataset: Amazon Reviews 2023 – Toys and Games (92.120 reviews)
+- Grafo: Neo4j AuraDB (92.120 nodos, 126.049 relaciones SIMILAR_TO)
+- Orquestación: AWS Lambda (Python 3.11)
+- LLM: Amazon Nova Micro (eu-west-3)
+- Autenticación: IAM + Secrets Manager
+- Ingesta: AWS Glue + S3
+
+### Estado final
+- Pipeline RAG end-to-end: ✅ funcional
+- Infraestructura cloud: ✅ cerrada
+- Preguntas de negocio validadas: ✅
 
 
 
