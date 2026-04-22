@@ -17,42 +17,23 @@ st.set_page_config(
 )
 
 # ══════════════════════════════════════════════════════════════════
-# CREDENCIALES — via st.secrets (Streamlit Cloud) o fallback local
-# ══════════════════════════════════════════════════════════════════
-try:
-    NEO4J_URI      = st.secrets["NEO4J_URI"]
-    NEO4J_USER     = st.secrets["NEO4J_USER"]
-    NEO4J_PASSWORD = st.secrets["NEO4J_PASSWORD"]
-    NEO4J_DATABASE = st.secrets["NEO4J_DATABASE"]
-    API_URL        = st.secrets.get(
-        "API_URL",
-        "https://qr6y691cs3.execute-api.eu-west-3.amazonaws.com/prod/g5-lambda-sot"
-    )
-except Exception:
-    # Fallback para desarrollo local sin secrets.toml
-    NEO4J_URI      = "neo4j+s://e5d261e6.databases.neo4j.io"
-    NEO4J_USER     = "e5d261e6"
-    NEO4J_PASSWORD = ""
-    NEO4J_DATABASE = "e5d261e6"
-    API_URL        = "https://qr6y691cs3.execute-api.eu-west-3.amazonaws.com/prod/g5-lambda-sot"
-
-# ══════════════════════════════════════════════════════════════════
 # CONSTANTES
 # ══════════════════════════════════════════════════════════════════
+API_URL = "https://qr6y691cs3.execute-api.eu-west-3.amazonaws.com/prod/g5-lambda-sot"  # ← pon tu password aquí
 
-# Badges por intent — icono, color, etiqueta
+# Colores e iconos por intent detectado
 INTENT_BADGES = {
     "top_rated":        ("🏆", "#2ecc71", "Top Rated"),
     "top_by_category":  ("📂", "#3498db", "Por Categoría"),
     "copurchase":       ("🔗", "#e67e22", "Co-Compras"),
     "similar_to":       ("🔍", "#9b59b6", "Similares"),
-    "category_affinity":("🗺️", "#1abc9c", "Afinidad"),
+    "category_affinity":("🗺️",  "#1abc9c", "Afinidad"),
     "combined_score":   ("⚡", "#e74c3c", "Score Combinado"),
     "generic":          ("💬", "#95a5a6", "General"),
     "error":            ("❌", "#e74c3c", "Error"),
 }
 
-# Preguntas de ejemplo — columna lateral Tab 1
+# Preguntas de ejemplo por categoría
 EXAMPLE_QUESTIONS = [
     "¿Cuáles son los productos mejor valorados?",
     "¿Cuáles son los mejores juguetes?",
@@ -64,11 +45,14 @@ EXAMPLE_QUESTIONS = [
 ]
 
 # ══════════════════════════════════════════════════════════════════
-# CSS PERSONALIZADO — tema oscuro
+# CSS PERSONALIZADO
 # ══════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
+  /* Fondo y tipografía general */
   .main { background-color: #0f1117; }
+
+  /* Caja de respuesta */
   .answer-box {
     background: linear-gradient(135deg, #1e1e2e, #16213e);
     border-left: 4px solid #4ec9b0;
@@ -79,6 +63,8 @@ st.markdown("""
     font-size: 0.97rem;
     line-height: 1.7;
   }
+
+  /* Badge de intent */
   .intent-badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -88,6 +74,8 @@ st.markdown("""
     margin-right: 0.5rem;
     margin-top: 0.5rem;
   }
+
+  /* Tarjeta de métrica */
   .metric-card {
     background: linear-gradient(135deg, #1e1e2e, #16213e);
     border-radius: 10px;
@@ -96,57 +84,90 @@ st.markdown("""
     border: 1px solid #2d2d4e;
     margin-bottom: 1rem;
   }
-  .metric-value { font-size: 2rem; font-weight: bold; color: #4ec9b0; }
-  .metric-label { font-size: 0.85rem; color: #888; margin-top: 0.3rem; }
-  .app-header { text-align: center; padding: 1.5rem 0 0.5rem 0; }
+  .metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #4ec9b0;
+  }
+  .metric-label {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 0.3rem;
+  }
+
+  /* Header */
+  .app-header {
+    text-align: center;
+    padding: 1.5rem 0 0.5rem 0;
+  }
   .app-title {
-    font-size: 2.4rem; font-weight: bold;
+    font-size: 2.4rem;
+    font-weight: bold;
     background: linear-gradient(90deg, #4ec9b0, #9cdcfe);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .app-subtitle { color: #666; font-size: 0.9rem; margin-top: 0.3rem; }
-  .context-box {
-    background: #1e1e2e; border-radius: 6px;
-    padding: 0.8rem 1rem; font-family: monospace;
-    font-size: 0.8rem; color: #888;
-    white-space: pre-wrap; max-height: 300px; overflow-y: auto;
+  .app-subtitle {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
   }
+
+  /* Contexto */
+  .context-box {
+    background: #1e1e2e;
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #888;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  /* Botones de ejemplo */
   div.stButton > button {
-    width: 100%; border-radius: 8px;
+    width: 100%;
+    border-radius: 8px;
     border: 1px solid #2d2d4e;
-    background: #1e1e2e; color: #d4d4d4;
+    background: #1e1e2e;
+    color: #d4d4d4;
     transition: all 0.2s;
   }
   div.stButton > button:hover {
-    border-color: #4ec9b0; color: #4ec9b0;
+    border-color: #4ec9b0;
+    color: #4ec9b0;
   }
 </style>
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════
-# SESSION STATE
+# SESSION STATE — guardar última respuesta
 # ══════════════════════════════════════════════════════════════════
-for key, default in [
-    ("last_answer",    None),
-    ("last_intent",    None),
-    ("last_context",   None),
-    ("last_category",  None),
-    ("last_entity_id", None),
-    ("prefill_question", ""),
-]:
-    if key not in st.session_state:
-        st.session_state[key] = default
+if "last_answer"  not in st.session_state:
+    st.session_state.last_answer  = None
+if "last_intent"  not in st.session_state:
+    st.session_state.last_intent  = None
+if "last_context" not in st.session_state:
+    st.session_state.last_context = None
+if "last_category" not in st.session_state:
+    st.session_state.last_category = None
+if "prefill_question" not in st.session_state:
+    st.session_state.prefill_question = ""
 
 # ══════════════════════════════════════════════════════════════════
-# FUNCIÓN — llamar a la API Lambda
+# FUNCIÓN PRINCIPAL — llamar a la API Lambda
 # ══════════════════════════════════════════════════════════════════
+
 def call_api(question, product_id=None, category=None):
     payload = {"question": question}
-    if product_id and str(product_id).strip():
-        payload["product_id"] = str(product_id).strip()
+    if product_id and product_id.strip():
+        payload["product_id"] = product_id.strip()
+    # NEW: forzar categoría si se pasa directamente
     if category:
         payload["category"] = category
+
     try:
         response = requests.post(API_URL, json=payload, timeout=30)
         raw  = response.json()
@@ -159,6 +180,7 @@ def call_api(question, product_id=None, category=None):
     except Exception as e:
         return {"error": f"❌ Error: {str(e)}"}
 
+
 # ══════════════════════════════════════════════════════════════════
 # HEADER
 # ══════════════════════════════════════════════════════════════════
@@ -170,6 +192,7 @@ st.markdown("""
   </div>
 </div>
 """, unsafe_allow_html=True)
+
 st.divider()
 
 # ══════════════════════════════════════════════════════════════════
@@ -187,7 +210,6 @@ tab1, tab2, tab3 = st.tabs([
 with tab1:
     col_main, col_side = st.columns([2, 1])
 
-    # ── Columna principal ─────────────────────────────────────────
     with col_main:
         st.markdown("### 💬 Haz una pregunta al grafo de conocimiento")
 
@@ -204,7 +226,7 @@ with tab1:
             product_id = st.text_input(
                 "Product ID (opcional — para co-compras de un producto concreto)",
                 placeholder="Ej: B087NN2K41",
-                help="Si lo rellenas, la consulta de co-compras se hará sobre este producto."
+                help="Si lo rellenas, la consulta de co-compras se hará sobre este producto específico."
             )
 
         # Botón principal
@@ -214,32 +236,30 @@ with tab1:
         if btn_ask and question:
             with st.spinner("🔄 Consultando Neo4j + Bedrock..."):
                 t0   = time.time()
-                pid  = product_id if product_id and product_id.strip() else None
-                body = call_api(question, pid)
+                body = call_api(question, product_id if "product_id" in dir() else None)
                 elapsed = time.time() - t0
 
             if "error" in body:
                 st.error(body["error"])
             else:
-                st.session_state.last_answer    = body.get("answer", "")
-                st.session_state.last_intent    = body.get("intent", "generic")
-                st.session_state.last_context   = body.get("context", "")
-                st.session_state.last_category  = body.get("category")
-                st.session_state.last_entity_id = pid
+                # Guardar en session state
+                st.session_state.last_answer   = body.get("answer", "")
+                st.session_state.last_intent   = body.get("intent", "generic")
+                st.session_state.last_context  = body.get("context", "")
+                st.session_state.last_category = body.get("category")
 
         elif btn_ask and not question:
             st.warning("⚠️ Escribe una pregunta primero.")
 
-        # ── Mostrar respuesta ─────────────────────────────────────
+        # Mostrar respuesta si existe
         if st.session_state.last_answer:
-
             # Badges de intent y categoría
             intent = st.session_state.last_intent or "generic"
             icon, color, label = INTENT_BADGES.get(intent, ("💬", "#95a5a6", intent))
-            cat = st.session_state.last_category
+            cat    = st.session_state.last_category
 
             badge_html = (
-                f'<span class="intent-badge" style="background:{color}22;' +
+                f'<span class="intent-badge" style="background:{color}22; ' +
                 f'color:{color}; border:1px solid {color};">{icon} {label}</span>'
             )
             if cat:
@@ -247,18 +267,20 @@ with tab1:
                     f'<span class="intent-badge" style="background:#3498db22;' +
                     f'color:#3498db; border:1px solid #3498db;">📂 {cat}</span>'
                 )
+
             st.markdown(badge_html, unsafe_allow_html=True)
 
-            # Respuesta Bedrock
+            # Respuesta
             st.markdown(
                 f'<div class="answer-box">{st.session_state.last_answer}</div>',
                 unsafe_allow_html=True
             )
 
-            # Expander — contexto + subgrafo
+            # Contexto del grafo
             with st.expander("📊 Ver datos del grafo (contexto Neo4j)"):
-
-                # 1. Texto del contexto
+            
+            # Contexto del grafo + subgrafo interactivo
+            # 1. Texto del contexto (como antes)
                 st.markdown(
                     f'<div class="context-box">{st.session_state.last_context}</div>',
                     unsafe_allow_html=True
@@ -266,23 +288,23 @@ with tab1:
 
                 st.divider()
 
-                # 2. Subgrafo interactivo Neo4j
+                # 2. Subgrafo Neo4j interactivo
                 st.markdown("**🕸️ Subgrafo Neo4j — nodos reales**")
                 st.caption("🔵 Producto · 🟠 Categoría | Grosor arista = peso co-compra")
 
-                with st.spinner("Renderizando subgrafo..."):
-                    graph_html = render_subgraph(
-                        intent    = st.session_state.last_intent or "generic",
-                        entity_id = st.session_state.last_entity_id,
-                        category  = st.session_state.last_category,
-                        uri       = NEO4J_URI,
-                        user      = NEO4J_USER,
-                        password  = NEO4J_PASSWORD,
-                        database  = NEO4J_DATABASE,
-                    )
-                components.html(graph_html, height=540, scrolling=False)
+            with st.spinner("Renderizando subgrafo..."):
+                graph_html = render_subgraph(
+                    intent    = st.session_state.last_intent or "generic",
+                    entity_id = st.session_state.get("last_entity_id"),
+                    category  = st.session_state.last_category,
+                    uri       = NEO4J_URI,
+                    user      = NEO4J_USER,
+                    password  = NEO4J_PASSWORD,
+                )
+            components.html(graph_html, height=540, scrolling=False)
+                
 
-    # ── Columna lateral — preguntas de ejemplo ────────────────────
+    # Columna lateral — preguntas de ejemplo
     with col_side:
         st.markdown("### 💡 Preguntas de ejemplo")
         st.caption("Haz clic para rellenar la pregunta automáticamente")
@@ -298,21 +320,32 @@ with tab1:
 with tab2:
     st.markdown("### 📊 Estado del Grafo de Conocimiento — Neo4j AuraDB")
 
-    # Métricas
+    # Métricas principales
     c1, c2, c3, c4 = st.columns(4)
-    metrics = [
-        (c1, "107,021", "🛍️ Productos"),
-        (c2, "43,299",  "👥 Reviewers"),
-        (c3, "19,167",  "🔗 Co-Compras"),
-        (c4, "190,750", "⭐ Reseñas"),
-    ]
-    for col, value, label in metrics:
-        with col:
-            st.markdown(f"""
-            <div class="metric-card">
-              <div class="metric-value">{value}</div>
-              <div class="metric-label">{label}</div>
-            </div>""", unsafe_allow_html=True)
+    with c1:
+        st.markdown("""
+        <div class="metric-card">
+          <div class="metric-value">107,021</div>
+          <div class="metric-label">🛍️ Productos</div>
+        </div>""", unsafe_allow_html=True)
+    with c2:
+        st.markdown("""
+        <div class="metric-card">
+          <div class="metric-value">43,299</div>
+          <div class="metric-label">👥 Reviewers</div>
+        </div>""", unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+        <div class="metric-card">
+          <div class="metric-value">19,167</div>
+          <div class="metric-label">🔗 Co-Compras</div>
+        </div>""", unsafe_allow_html=True)
+    with c4:
+        st.markdown("""
+        <div class="metric-card">
+          <div class="metric-value">190,750</div>
+          <div class="metric-label">⭐ Reseñas</div>
+        </div>""", unsafe_allow_html=True)
 
     st.divider()
 
@@ -321,8 +354,12 @@ with tab2:
     with col_chart:
         st.markdown("#### 📦 Distribución de Reseñas por Categoría")
         df_cat = pd.DataFrame({
-            "Categoría": ["Sports & Outdoors", "Video Games", "Toys & Games"],
-            "Reseñas":   [65883, 65577, 59290]
+            "Categoría": [
+                "Sports & Outdoors",
+                "Video Games",
+                "Toys & Games"
+            ],
+            "Reseñas": [65883, 65577, 59290]
         }).set_index("Categoría")
         st.bar_chart(df_cat, color="#4ec9b0", height=300)
 
@@ -347,22 +384,36 @@ with tab2:
         RELACIONES
         ─────────────────────────────
         REVIEWED     → 190,750
+          stars, timestamp, year
+          bayesian_score
+
         CO_PURCHASED →  19,167
+          weight, cross_cat
+
         BELONGS_TO   → 107,021
+
         ACTIVE_IN    →  27,831
+          review_count, avg_stars
         ```
         """)
 
     st.divider()
 
+    # Afinidad entre categorías
     st.markdown("#### 🔗 Afinidad entre Categorías (CO_PURCHASED cross-cat)")
     df_aff = pd.DataFrame([
-        {"Origen": "Toys & Games",     "Destino": "Sports & Outdoors", "Aristas": 1450, "Peso Total": 2915},
-        {"Origen": "Sports & Outdoors","Destino": "Toys & Games",      "Aristas": 1279, "Peso Total": 2577},
-        {"Origen": "Video Games",      "Destino": "Toys & Games",      "Aristas": 217,  "Peso Total": 444},
-        {"Origen": "Sports & Outdoors","Destino": "Video Games",       "Aristas": 214,  "Peso Total": 432},
-        {"Origen": "Video Games",      "Destino": "Sports & Outdoors", "Aristas": 183,  "Peso Total": 366},
-        {"Origen": "Toys & Games",     "Destino": "Video Games",       "Aristas": 156,  "Peso Total": 313},
+        {"Origen": "Toys & Games", "Destino": "Sports & Outdoors",
+         "Aristas": 1450, "Peso Total": 2915},
+        {"Origen": "Sports & Outdoors", "Destino": "Toys & Games",
+         "Aristas": 1279, "Peso Total": 2577},
+        {"Origen": "Video Games", "Destino": "Toys & Games",
+         "Aristas": 217,  "Peso Total": 444},
+        {"Origen": "Sports & Outdoors", "Destino": "Video Games",
+         "Aristas": 214,  "Peso Total": 432},
+        {"Origen": "Video Games", "Destino": "Sports & Outdoors",
+         "Aristas": 183,  "Peso Total": 366},
+        {"Origen": "Toys & Games", "Destino": "Video Games",
+         "Aristas": 156,  "Peso Total": 313},
     ])
     st.dataframe(df_aff, use_container_width=True, hide_index=True)
 
@@ -393,20 +444,21 @@ with tab3:
                     st.error(body["error"])
                 else:
                     context = body.get("context", "")
-                    rows = []
+                    rows    = []
                     for line in context.split("\n"):
                         if "Título:" in line and "Score" in line:
                             try:
-                                parts = {
-                                    p.split(":")[0].strip():
-                                    ":".join(p.split(":")[1:]).strip()
-                                    for p in line.split("|")
-                                }
+                                parts  = {p.split(":")[0].strip(): ":".join(p.split(":")[1:]).strip()
+                                          for p in line.split("|")}
+                                titulo = parts.get("Título", "N/A")[:40] + "..."
+                                score  = parts.get("Score bayesiano", "N/A")
+                                stars  = parts.get("Avg stars", "N/A")
+                                revs   = parts.get("Reviews", "N/A")
                                 rows.append({
-                                    "Producto": parts.get("Título", "N/A")[:40] + "...",
-                                    "Score":    parts.get("Score bayesiano", "N/A"),
-                                    "⭐":        parts.get("Avg stars", "N/A"),
-                                    "Reviews":  parts.get("Reviews", "N/A"),
+                                    "Producto": titulo,
+                                    "Score": score,
+                                    "⭐": stars,
+                                    "Reviews": revs
                                 })
                             except Exception:
                                 continue
@@ -427,7 +479,7 @@ with tab3:
 st.divider()
 st.markdown("""
 <div style="text-align:center; color:#444; font-size:0.8rem; padding:1rem 0">
-  G5 SOT · Neo4j AuraDB · Amazon Bedrock · AWS Lambda · API Gateway · Glue<br>
+  G5 SOT · Neo4j AuraDB · Amazon Bedrock · AWS Lambda · API Gateway · Glue · Athena<br>
   190,750 reseñas · 107,021 productos · 3 categorías · Bayesian Score
 </div>
 """, unsafe_allow_html=True)

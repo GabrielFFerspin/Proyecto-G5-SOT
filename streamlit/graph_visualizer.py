@@ -202,7 +202,8 @@ LIMIT 10
 
 class GraphVisualizer:
 
-    def __init__(self, uri: str, user: str, password: str):
+    def __init__(self, uri: str, user: str, password: str, database: str = "e5d261e6"):
+        self.database = database
         # Conectar a Neo4j AuraDB directamente
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
         self.driver.verify_connectivity()
@@ -369,7 +370,7 @@ class GraphVisualizer:
                      entity_id: str = None,
                      category: str = None) -> str:
         # Seleccionar query según intent y construir grafo
-        with self.driver.session(database="e5d261e6") as session:
+        with self.driver.session(database=self.database) as session:
 
             if intent in ("copurchase", "similar_to") and entity_id:
                 records = session.run(
@@ -407,17 +408,17 @@ class GraphVisualizer:
 # FUNCIÓN STANDALONE — para usar desde app.py
 # ══════════════════════════════════════════════════════════════════
 
-def render_subgraph(intent: str, entity_id: str = None,
-                    category: str = None,
-                    uri: str = "",
-                    user: str = "e5d261e6",
-                    password: str = "") -> str:
+
+def render_subgraph(intent, entity_id=None, category=None,
+                    uri="", user="e5d261e6", password="",
+                    database="e5d261e6"):
+
     """
     Crea GraphVisualizer, genera el subgrafo HTML y cierra conexión.
     Devuelve el HTML del grafo o un mensaje de error.
     """
     try:
-        viz = GraphVisualizer(uri, user, password)
+        viz = GraphVisualizer(uri, user, password, database)
         html = viz.get_subgraph(intent, entity_id, category)
         viz.close()
         return html
