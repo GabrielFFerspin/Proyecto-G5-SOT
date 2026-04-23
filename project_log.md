@@ -31,6 +31,7 @@ Amazon Reviews disponible en el Registry of Open Data on AWS.
 ### Resultado
 - Dataset disponible en S3 desde fuente alternativa (Kaggle).
 - Subset utilizado: reviews en inglés (`reviews_en.csv`).
+- https://proyectog5sot.streamlit.app/
 
 ---
 
